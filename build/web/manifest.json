@@ -1,11 +1,11 @@
 {
-    "name": "gestion_tramites",
-    "short_name": "gestion_tramites",
-    "start_url": ".",
+    "name": "Integra - Soluciones para Profesionales",
+    "short_name": "Integra",
+    "start_url": "/gestion-tramites/",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#1B4F72",
+    "theme_color": "#1B4F72",
+    "description": "Sistema de gestión de trámites para profesionales",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
