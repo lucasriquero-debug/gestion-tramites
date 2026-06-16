@@ -18,7 +18,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="google-signin-client_id" content="345104547307-d3ondo9gfvn13h5l47e0hbb69oovs6si.apps.googleusercontent.com">
+<meta name="google-signin-client_id" content="345104547307-d3ondo9gfvn13h5l47e0hbb69oovs6si.apps.googleusercontent.com">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -41,6 +41,16 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
-  <script src="flutter_bootstrap.js" async></script>
-</body>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/gestion-tramites/firebase-messaging-sw.js')
+      .then(function(registration) {
+        console.log('Service Worker registrado:', registration);
+      })
+      .catch(function(error) {
+        console.log('Error registrando Service Worker:', error);
+      });
+  }
+</script>
+<script src="flutter_bootstrap.js" async></script></body>
 </html>
