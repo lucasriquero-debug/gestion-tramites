@@ -1,19 +1,53 @@
 import 'package:flutter/material.dart';
-import 'oficina_form_screen.dart';
 import '../services/firestore_service.dart';
+import 'oficina_form_screen.dart';
 
 class OficinaDetalleScreen extends StatelessWidget {
+  final String oficinaId;
+
+  const OficinaDetalleScreen({super.key, required this.oficinaId});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: FirestoreService().getOficinas(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final oficinas = snapshot.data ?? [];
+        final oficina = oficinas.firstWhere(
+          (o) => o['id'] == oficinaId,
+          orElse: () => {},
+        );
+
+        if (oficina.isEmpty) {
+          return const Scaffold(
+            body: Center(child: Text('Oficina no encontrada')),
+          );
+        }
+
+        return _OficinaDetalleView(oficina: oficina);
+      },
+    );
+  }
+}
+
+class _OficinaDetalleView extends StatelessWidget {
   final Map<String, dynamic> oficina;
 
-  const OficinaDetalleScreen({super.key, required this.oficina});
+  const _OficinaDetalleView({required this.oficina});
 
   @override
   Widget build(BuildContext context) {
     final contactos = (oficina['contactos'] as List?) ?? [];
     final tramites = (oficina['tramites'] as List?) ?? [];
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: Text(oficina['nombre'] ?? 'Detalle oficina'),
         actions: [
@@ -61,24 +95,23 @@ class OficinaDetalleScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Datos básicos
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cs.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     oficina['nombre'] ?? '',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1F2937),
+                      color: cs.onSurface,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -101,32 +134,31 @@ class OficinaDetalleScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Contactos estratégicos
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cs.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Contactos estratégicos',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1F2937),
+                      color: cs.onSurface,
                     ),
                   ),
                   const SizedBox(height: 16),
                   if (contactos.isEmpty)
-                    const Text(
+                    Text(
                       'Sin contactos cargados',
-                      style: TextStyle(color: Color(0xFF9CA3AF)),
+                      style: TextStyle(
+                          color: cs.onSurface.withOpacity(0.4)),
                     )
                   else
                     ...contactos.map((c) {
@@ -135,13 +167,13 @@ class OficinaDetalleScreen extends StatelessWidget {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF9FAFB),
+                          color: cs.primary.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.person_outline,
-                                color: Color(0xFF6366F1), size: 20),
+                            Icon(Icons.person_outline,
+                                color: cs.primary, size: 20),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -150,17 +182,18 @@ class OficinaDetalleScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     contacto['nombre'] ?? '',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
-                                      color: Color(0xFF1F2937),
+                                      color: cs.onSurface,
                                     ),
                                   ),
                                   Text(
                                     contacto['area'] ?? '',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFF6B7280),
+                                      color:
+                                          cs.onSurface.withOpacity(0.6),
                                     ),
                                   ),
                                 ],
@@ -171,16 +204,18 @@ class OficinaDetalleScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   contacto['telefono'] ?? '',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF6B7280),
+                                    color:
+                                        cs.onSurface.withOpacity(0.6),
                                   ),
                                 ),
                                 Text(
                                   contacto['cumpleanos'] ?? '',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF9CA3AF),
+                                    color:
+                                        cs.onSurface.withOpacity(0.4),
                                   ),
                                 ),
                               ],
@@ -193,84 +228,123 @@ class OficinaDetalleScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Trámites
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cs.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Trámites',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1F2937),
+                      color: cs.onSurface,
                     ),
                   ),
                   const SizedBox(height: 16),
                   if (tramites.isEmpty)
-                    const Text(
+                    Text(
                       'Sin trámites cargados',
-                      style: TextStyle(color: Color(0xFF9CA3AF)),
+                      style: TextStyle(
+                          color: cs.onSurface.withOpacity(0.4)),
                     )
                   else
                     ...tramites.map((t) {
                       final tramite = t is Map
                           ? t as Map<String, dynamic>
                           : {'nombre': t.toString()};
+                      final docs =
+                          (tramite['documentacion'] as List?) ?? [];
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF9FAFB),
+                          color: cs.primary.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.assignment_outlined,
-                                color: Color(0xFF6366F1), size: 20),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    tramite['nombre'] ?? t.toString(),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                      color: Color(0xFF1F2937),
-                                    ),
+                            Row(
+                              children: [
+                                Icon(Icons.assignment_outlined,
+                                    color: cs.primary, size: 20),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        tramite['nombre'] ??
+                                            t.toString(),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                          color: cs.onSurface,
+                                        ),
+                                      ),
+                                      if ((tramite['area'] ?? '') != '')
+                                        Text(
+                                          tramite['area'] ?? '',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: cs.onSurface
+                                                .withOpacity(0.6),
+                                          ),
+                                        ),
+                                    ],
                                   ),
-                                  if (tramite['area'] != null &&
-                                      tramite['area'] != '')
-                                    Text(
-                                      tramite['area'] ?? '',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF6B7280),
-                                      ),
-                                    ),
-                                  if (tramite['documentacion'] != null &&
-                                      tramite['documentacion'] != '')
-                                    Text(
-                                      tramite['documentacion'] ?? '',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF9CA3AF),
-                                      ),
-                                    ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
+                            if (docs.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                'Documentación:',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.onSurface.withOpacity(0.6),
+                                ),
+                              ),
+                              ...docs.map((d) {
+                                final doc = d is Map
+                                    ? Map<String, dynamic>.from(
+                                        d as Map)
+                                    : {
+                                        'nombre': d.toString(),
+                                        'verificado': false
+                                      };
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.only(top: 4),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.article_outlined,
+                                          size: 14,
+                                          color: cs.onSurface
+                                              .withOpacity(0.4)),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        doc['nombre']?.toString() ?? '',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: cs.onSurface
+                                              .withOpacity(0.6),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ],
                           ],
                         ),
                       );
@@ -299,26 +373,25 @@ class _DatoFila extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(icono, size: 18, color: const Color(0xFF6B7280)),
+          Icon(icono, size: 18, color: cs.onSurface.withOpacity(0.5)),
           const SizedBox(width: 12),
           Text(
             '$label: ',
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF6B7280),
-            ),
+            style: TextStyle(
+                fontSize: 13, color: cs.onSurface.withOpacity(0.6)),
           ),
           Expanded(
             child: Text(
               valor,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF1F2937),
+                color: cs.onSurface,
               ),
             ),
           ),

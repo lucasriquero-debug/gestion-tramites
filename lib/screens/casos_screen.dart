@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 import 'caso_detalle_screen.dart';
 import 'caso_form_screen.dart';
-
+import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
 class CasosScreen extends StatefulWidget {
   const CasosScreen({super.key});
 
@@ -85,7 +86,24 @@ class _CasosScreenState extends State<CasosScreen> {
                 }
 
                 var casos = snapshot.data ?? [];
+                casos = casos.where((c) => c['estado'] != 'cerrado').toList();
 
+// Filtrar por permisos
+final auth = Provider.of<AuthService>(context, listen: false);
+if (!auth.esCEO && !auth.tienePermiso('casos_verNoAsignados')) {
+  final nombre = auth.nombreEmpleado.toLowerCase();
+  casos = casos.where((c) {
+    final empleado = (c['empleadoAsignado'] ?? '').toString().toLowerCase();
+    final tramites = (c['tramites'] as List? ?? []);
+    final tieneTramitoAsignado = tramites.any((t) {
+      if (t is Map) {
+        return (t['empleadoAsignado'] ?? '').toString().toLowerCase() == nombre;
+      }
+      return false;
+    });
+    return empleado == nombre || tieneTramitoAsignado;
+  }).toList();
+}
                 if (_busqueda.isNotEmpty) {
                   casos = casos.where((c) {
                     final nombre = (c['nombre'] ?? '').toLowerCase();
@@ -132,8 +150,8 @@ class _CasosScreenState extends State<CasosScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                              CasoDetalleScreen(caso: caso),
-                        ),
+                              CasoDetalleScreen(casoId: caso['id']),
+),
                       ),
                       onEliminar: () async {
                         final confirmar = await showDialog<bool>(

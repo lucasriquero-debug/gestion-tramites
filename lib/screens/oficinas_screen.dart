@@ -57,8 +57,7 @@ class _OficinasScreenState extends State<OficinasScreen> {
                 if (_busqueda.isNotEmpty) {
                   oficinas = oficinas.where((o) {
                     final nombre = (o['nombre'] ?? '').toLowerCase();
-                    return nombre
-                        .contains(_busqueda.toLowerCase());
+                    return nombre.contains(_busqueda.toLowerCase());
                   }).toList();
                 }
 
@@ -66,16 +65,14 @@ class _OficinasScreenState extends State<OficinasScreen> {
                   return Center(
                     child: Text('No hay oficinas cargadas',
                         style: TextStyle(
-                            color:
-                                cs.onBackground.withOpacity(0.5))),
+                            color: cs.onSurface.withOpacity(0.5))),
                   );
                 }
 
                 return ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: oficinas.length,
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(height: 12),
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final oficina = oficinas[index];
                     final tramites =
@@ -87,8 +84,8 @@ class _OficinasScreenState extends State<OficinasScreen> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              OficinaDetalleScreen(oficina: oficina),
+                          builder: (_) => OficinaDetalleScreen(
+                              oficinaId: oficina['id']),
                         ),
                       ),
                       child: Container(
@@ -116,8 +113,7 @@ class _OficinasScreenState extends State<OficinasScreen> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     oficina['nombre'] ?? '',
@@ -132,16 +128,14 @@ class _OficinasScreenState extends State<OficinasScreen> {
                                     oficina['ubicacion'] ?? '',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color:
-                                          cs.onSurface.withOpacity(0.6),
+                                      color: cs.onSurface.withOpacity(0.6),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                             Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
                                   '$tramites trámites',
@@ -156,8 +150,7 @@ class _OficinasScreenState extends State<OficinasScreen> {
                                   '$contactos contactos',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color:
-                                        cs.onSurface.withOpacity(0.5),
+                                    color: cs.onSurface.withOpacity(0.5),
                                   ),
                                 ),
                               ],

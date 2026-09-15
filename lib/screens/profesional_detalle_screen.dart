@@ -3,9 +3,43 @@ import '../services/firestore_service.dart';
 import 'profesional_form_screen.dart';
 
 class ProfesionalDetalleScreen extends StatelessWidget {
+  final String profesionalId;
+
+  const ProfesionalDetalleScreen({super.key, required this.profesionalId});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: FirestoreService().getProfesionales(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final profesionales = snapshot.data ?? [];
+        final profesional = profesionales.firstWhere(
+          (p) => p['id'] == profesionalId,
+          orElse: () => {},
+        );
+
+        if (profesional.isEmpty) {
+          return const Scaffold(
+            body: Center(child: Text('Profesional no encontrado')),
+          );
+        }
+
+        return _ProfesionalDetalleView(profesional: profesional);
+      },
+    );
+  }
+}
+
+class _ProfesionalDetalleView extends StatelessWidget {
   final Map<String, dynamic> profesional;
 
-  const ProfesionalDetalleScreen({super.key, required this.profesional});
+  const _ProfesionalDetalleView({required this.profesional});
 
   @override
   Widget build(BuildContext context) {
@@ -14,8 +48,7 @@ class ProfesionalDetalleScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            '${profesional['nombre']} ${profesional['apellido']}'),
+        title: Text('${profesional['nombre']} ${profesional['apellido']}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
@@ -83,8 +116,7 @@ class ProfesionalDetalleScreen extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        _inicialesProfesion(
-                            profesional['profesion'] ?? ''),
+                        _inicialesProfesion(profesional['profesion'] ?? ''),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -219,16 +251,14 @@ class ProfesionalDetalleScreen extends StatelessWidget {
                                     'Usuario: ${cuenta['usuario'] ?? '-'}',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color:
-                                          cs.onSurface.withOpacity(0.6),
+                                      color: cs.onSurface.withOpacity(0.6),
                                     ),
                                   ),
                                   Text(
                                     'Contraseña: ${cuenta['contrasena'] ?? '-'}',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color:
-                                          cs.onSurface.withOpacity(0.4),
+                                      color: cs.onSurface.withOpacity(0.4),
                                     ),
                                   ),
                                 ],
@@ -241,7 +271,116 @@ class ProfesionalDetalleScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 80),
+            const SizedBox(height: 16),
+// Casos archivados
+Container(
+  width: double.infinity,
+  padding: const EdgeInsets.all(20),
+  decoration: BoxDecoration(
+    color: cs.surface,
+    borderRadius: BorderRadius.circular(16),
+    border: Border.all(color: Theme.of(context).dividerColor),
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Icon(Icons.archive_outlined, color: cs.primary, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            'Casos archivados',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: cs.onSurface,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      if ((profesional['historialCasos'] as List? ?? []).isEmpty)
+        Text(
+          'Sin casos archivados',
+          style: TextStyle(color: cs.onSurface.withOpacity(0.4)),
+        )
+      else
+        ...(profesional['historialCasos'] as List).map((c) {
+          final caso = c is Map
+              ? Map<String, dynamic>.from(c as Map)
+              : {};
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: cs.primary.withOpacity(0.04),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: cs.primary.withOpacity(0.1)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        caso['nombre'] ?? '',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981)
+                            .withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'Cerrado',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF10B981),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if ((caso['tipoCaso'] ?? '') != '')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      caso['tipoCaso'] ?? '',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Cerrado: ${caso['fechaCierre'] ?? '-'}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: cs.onSurface.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+    ],
+  ),
+),
+const SizedBox(height: 80),
           ],
         ),
       ),

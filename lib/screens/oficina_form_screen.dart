@@ -106,53 +106,114 @@ class _OficinaFormScreenState extends State<OficinaFormScreen> {
   }
 
   void _agregarTramite() {
-    showDialog(
-      context: context,
-      builder: (_) {
-        final nombreC = TextEditingController();
-        final areaC = TextEditingController();
-        final documentacionC = TextEditingController();
+  showDialog(
+    context: context,
+    builder: (_) {
+      final nombreC = TextEditingController();
+      final areaC = TextEditingController();
+      final docC = TextEditingController();
+      List<Map<String, dynamic>> docs = [];
 
-        return AlertDialog(
-          title: const Text('Agregar trámite'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _CampoDialog(label: 'Nombre', controller: nombreC),
-                _CampoDialog(label: 'Área', controller: areaC),
-                _CampoDialog(
-                    label: 'Documentación requerida',
-                    controller: documentacionC),
-              ],
+      return StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            title: const Text('Agregar trámite'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _CampoDialog(label: 'Nombre', controller: nombreC),
+                  _CampoDialog(label: 'Área', controller: areaC),
+                  const Text(
+                    'Documentación requerida',
+                    style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  ...docs.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final d = entry.value;
+                    return Row(
+                      children: [
+                        const Icon(Icons.article_outlined,
+                            size: 16, color: Color(0xFF6B7280)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(d['nombre'] ?? '',
+                              style: const TextStyle(fontSize: 13)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              size: 16, color: Color(0xFF9CA3AF)),
+                          onPressed: () =>
+                              setStateDialog(() => docs.removeAt(i)),
+                        ),
+                      ],
+                    );
+                  }),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: docC,
+                          decoration: InputDecoration(
+                            hintText: 'Agregar documento...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle,
+                            color: Color(0xFF1B4F72)),
+                        onPressed: () {
+                          if (docC.text.trim().isNotEmpty) {
+                            setStateDialog(() {
+                              docs.add({
+                                'nombre': docC.text.trim(),
+                                'verificado': false,
+                              });
+                              docC.clear();
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _tramites.add({
-                    'nombre': nombreC.text.trim(),
-                    'area': areaC.text.trim(),
-                    'documentacion': documentacionC.text.trim(),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _tramites.add({
+                      'nombre': nombreC.text.trim(),
+                      'area': areaC.text.trim(),
+                      'documentacion': docs,
+                    });
                   });
-                });
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6366F1)),
-              child: const Text('Agregar',
-                  style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    );
-  }
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1B4F72)),
+                child: const Text('Agregar',
+                    style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
 
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;

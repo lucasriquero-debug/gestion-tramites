@@ -60,6 +60,17 @@ class NotificacionService {
     String casoId = '',
     String tramiteId = '',
   }) async {
+    // Evitar crear la misma notificación repetidamente si aún no fue leída
+    final existentes = await _db
+        .collection('notificaciones')
+        .where('destinatario', isEqualTo: destinatario)
+        .where('mensaje', isEqualTo: mensaje)
+        .where('leida', isEqualTo: false)
+        .limit(1)
+        .get();
+
+    if (existentes.docs.isNotEmpty) return;
+
     await _db.collection('notificaciones').add({
       'tipo': tipo,
       'mensaje': mensaje,
@@ -71,6 +82,21 @@ class NotificacionService {
     });
   }
 
+  /// Busca el email de un empleado por su nombre completo.
+  /// Devuelve vacío si no lo encuentra.
+  Future<String> _emailDeEmpleado(String nombre) async {
+    if (nombre.isEmpty) return '';
+    final snap = await _db
+        .collection('empleados')
+        .where('nombre', isEqualTo: nombre)
+        .limit(1)
+        .get();
+    if (snap.docs.isNotEmpty) {
+      return (snap.docs.first.data()['mail'] ?? '').toString();
+    }
+    return '';
+  }
+
   Future<void> generarNotificacionesVencimiento(
       List<Map<String, dynamic>> casos) async {
     final hoy = DateTime.now();
@@ -79,9 +105,9 @@ class NotificacionService {
       final tramites = (caso['tramites'] as List? ?? []);
       for (final t in tramites) {
         if (t is! Map) continue;
-        final tramite = Map<String, dynamic>.from(t as Map);
+        final tramite = Map<String, dynamic>.from(t);
         final fechaStr = tramite['fechaLimite'] ?? '';
-        final empleado = tramite['empleadoAsignado'] ?? '';
+        final nombreEmpleado = tramite['empleadoAsignado'] ?? '';
         final estado = tramite['estado'] ?? '';
 
         if (fechaStr.isEmpty || estado == 'completado') continue;
@@ -100,13 +126,16 @@ class NotificacionService {
           final diasRestantes = fecha.difference(hoy).inDays;
 
           if (diasRestantes <= 3 && diasRestantes >= 0) {
-            // Notificar al empleado asignado
-            if (empleado.isNotEmpty) {
+            if (nombreEmpleado.isNotEmpty) {
+              // Obtener el email real del empleado para que el filtro coincida
+              final emailEmpleado = await _emailDeEmpleado(nombreEmpleado);
+              final destinatario =
+                  emailEmpleado.isNotEmpty ? emailEmpleado : nombreEmpleado;
               await crearNotificacion(
                 tipo: 'vencimiento',
                 mensaje:
                     'El trámite "${tramite['naturaleza']}" del caso "${caso['nombre']}" vence en $diasRestantes día${diasRestantes != 1 ? 's' : ''}.',
-                destinatario: empleado,
+                destinatario: destinatario,
                 casoId: caso['id'] ?? '',
               );
             }
@@ -114,5 +143,4 @@ class NotificacionService {
         } catch (_) {}
       }
     }
-  }
-}
+  }}

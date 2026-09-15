@@ -130,27 +130,15 @@ class _CasoFormScreenState extends State<CasoFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final esEdicion = widget.caso != null;
     final profesionalesFiltrados = _profesionales
         .where((p) => p['profesion'] == _clienteTipo)
         .toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1F2937)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          esEdicion ? 'Editar caso' : 'Nuevo caso',
-          style: const TextStyle(
-            color: Color(0xFF1F2937),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        title: Text(esEdicion ? 'Editar caso' : 'Nuevo caso'),
       ),
       body: Form(
         key: _formKey,
@@ -172,13 +160,13 @@ class _CasoFormScreenState extends State<CasoFormScreen> {
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cs.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -186,26 +174,27 @@ class _CasoFormScreenState extends State<CasoFormScreen> {
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: Color(0xFF1F2937))),
+                                  color: cs.onSurface)),
                           Text('Se marcará con borde rojo',
                               style: TextStyle(
-                                  fontSize: 12, color: Color(0xFF6B7280))),
+                                  fontSize: 12,
+                                  color: cs.onSurface.withOpacity(0.6))),
                         ],
                       ),
                     ),
                     Switch(
                       value: _urgente,
                       onChanged: (v) => setState(() => _urgente = v),
-                      activeColor: const Color(0xFF6366F1),
+                      activeColor: cs.primary,
                     ),
                   ],
                 ),
               ),
-              const Text('Cliente',
+              Text('Cliente',
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1F2937))),
+                      color: cs.onSurface)),
               const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.only(bottom: 16),
@@ -214,19 +203,9 @@ class _CasoFormScreenState extends State<CasoFormScreen> {
                   decoration: InputDecoration(
                     labelText: 'Tipo de cliente',
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: cs.surface,
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            const BorderSide(color: Color(0xFFE5E7EB))),
-                    enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            const BorderSide(color: Color(0xFFE5E7EB))),
-                    focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            const BorderSide(color: Color(0xFF6366F1))),
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   items: _tiposCliente
                       .map((t) =>
@@ -248,19 +227,9 @@ class _CasoFormScreenState extends State<CasoFormScreen> {
                     decoration: InputDecoration(
                       labelText: 'Seleccionar $_clienteTipo',
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: cs.surface,
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: Color(0xFFE5E7EB))),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: Color(0xFFE5E7EB))),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: Color(0xFF6366F1))),
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     items: [
                       const DropdownMenuItem(
@@ -298,16 +267,16 @@ class _CasoFormScreenState extends State<CasoFormScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Trámites',
+                  Text('Trámites',
                       style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1F2937))),
+                          color: cs.onSurface)),
                   TextButton.icon(
                     onPressed: _agregarTramite,
-                    icon: const Icon(Icons.add, color: Color(0xFF6366F1)),
-                    label: const Text('Agregar',
-                        style: TextStyle(color: Color(0xFF6366F1))),
+                    icon: Icon(Icons.add, color: cs.primary),
+                    label: Text('Agregar',
+                        style: TextStyle(color: cs.primary)),
                   ),
                 ],
               ),
@@ -316,13 +285,15 @@ class _CasoFormScreenState extends State<CasoFormScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cs.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    border: Border.all(
+                        color: Theme.of(context).dividerColor),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text('Sin trámites cargados',
-                        style: TextStyle(color: Color(0xFF9CA3AF))),
+                        style: TextStyle(
+                            color: cs.onSurface.withOpacity(0.4))),
                   ),
                 )
               else
@@ -333,10 +304,10 @@ class _CasoFormScreenState extends State<CasoFormScreen> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cs.surface,
                       borderRadius: BorderRadius.circular(12),
-                      border:
-                          Border.all(color: const Color(0xFFE5E7EB)),
+                      border: Border.all(
+                          color: Theme.of(context).dividerColor),
                     ),
                     child: Row(
                       children: [
@@ -346,39 +317,43 @@ class _CasoFormScreenState extends State<CasoFormScreen> {
                             children: [
                               Text(
                                 t['naturaleza'] ?? '',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF1F2937)),
+                                    color: cs.onSurface),
                               ),
                               if ((t['oficinaNombre'] ?? '') != '')
                                 Text(t['oficinaNombre'],
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 12,
-                                        color: Color(0xFF6B7280))),
+                                        color: cs.onSurface
+                                            .withOpacity(0.6))),
                               if ((t['fechaLimite'] ?? '') != '')
                                 Text('Vence: ${t['fechaLimite']}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 12,
-                                        color: Color(0xFF9CA3AF))),
+                                        color: cs.onSurface
+                                            .withOpacity(0.5))),
                               if ((t['empleadoAsignado'] ?? '') != '')
                                 Text(
                                     'Empleado: ${t['empleadoAsignado']}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 12,
-                                        color: Color(0xFF9CA3AF))),
+                                        color: cs.onSurface
+                                            .withOpacity(0.4))),
                             ],
                           ),
                         ),
                         Row(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.edit_outlined,
-                                  color: Color(0xFF6366F1), size: 20),
+                              icon: Icon(Icons.edit_outlined,
+                                  color: cs.primary, size: 20),
                               onPressed: () => _editarTramite(i),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete_outline,
-                                  color: Color(0xFF9CA3AF), size: 20),
+                              icon: Icon(Icons.delete_outline,
+                                  color: cs.onSurface.withOpacity(0.3),
+                                  size: 20),
                               onPressed: () => setState(
                                   () => _tramites.removeAt(i)),
                             ),
@@ -394,7 +369,7 @@ class _CasoFormScreenState extends State<CasoFormScreen> {
                 child: ElevatedButton(
                   onPressed: _guardando ? null : _guardar,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1),
+                    backgroundColor: cs.primary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -440,8 +415,8 @@ class _TramiteDialogState extends State<_TramiteDialog> {
   late TextEditingController _naturalezaController;
   late TextEditingController _fechaLimiteController;
   late TextEditingController _revisionController;
-  late TextEditingController _documentacionController;
   late TextEditingController _oficinaNombreLibreController;
+  late TextEditingController _docController;
 
   String? _oficinaId;
   String _oficinaNombre = '';
@@ -450,6 +425,7 @@ class _TramiteDialogState extends State<_TramiteDialog> {
   String _estado = 'pendiente';
   bool _oficinaLibre = false;
   List<String> _tramitesPrecargados = [];
+  List<Map<String, dynamic>> _documentacion = [];
 
   @override
   void initState() {
@@ -461,15 +437,23 @@ class _TramiteDialogState extends State<_TramiteDialog> {
         TextEditingController(text: t?['fechaLimite'] ?? '');
     _revisionController =
         TextEditingController(text: t?['revisionPeriodica'] ?? '');
-    _documentacionController =
-        TextEditingController(text: t?['documentacion'] ?? '');
     _oficinaNombreLibreController =
         TextEditingController(text: t?['oficinaNombreLibre'] ?? '');
+    _docController = TextEditingController();
     _oficinaId = t?['oficinaId'];
     _oficinaNombre = t?['oficinaNombre'] ?? '';
     _empleadoAsignado = t?['empleadoAsignado'];
     _estado = t?['estado'] ?? 'pendiente';
     _oficinaLibre = t?['oficinaLibre'] == true;
+
+    if (t?['documentacion'] != null && t!['documentacion'] is List) {
+      _documentacion = List<Map<String, dynamic>>.from(
+        (t['documentacion'] as List).map((d) {
+          if (d is Map) return Map<String, dynamic>.from(d as Map);
+          return {'nombre': d.toString(), 'verificado': false};
+        }),
+      );
+    }
   }
 
   @override
@@ -477,13 +461,15 @@ class _TramiteDialogState extends State<_TramiteDialog> {
     _naturalezaController.dispose();
     _fechaLimiteController.dispose();
     _revisionController.dispose();
-    _documentacionController.dispose();
     _oficinaNombreLibreController.dispose();
+    _docController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return AlertDialog(
       title: Text(widget.tramiteExistente != null
           ? 'Editar trámite'
@@ -498,9 +484,7 @@ class _TramiteDialogState extends State<_TramiteDialog> {
                 controller: _naturalezaController),
             const Text('Oficina',
                 style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1F2937))),
+                    fontSize: 13, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -511,7 +495,7 @@ class _TramiteDialogState extends State<_TramiteDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: !_oficinaLibre
-                            ? const Color(0xFF6366F1)
+                            ? cs.primary
                             : const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -533,7 +517,7 @@ class _TramiteDialogState extends State<_TramiteDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: _oficinaLibre
-                            ? const Color(0xFF6366F1)
+                            ? cs.primary
                             : const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -570,6 +554,7 @@ class _TramiteDialogState extends State<_TramiteDialog> {
                   setState(() {
                     _oficinaId = v;
                     _tramitePrecargado = null;
+                    _documentacion = [];
                     if (v != null) {
                       final of = widget.oficinas
                           .firstWhere((o) => o['id'] == v);
@@ -602,13 +587,47 @@ class _TramiteDialogState extends State<_TramiteDialog> {
                     ..._tramitesPrecargados.map((t) =>
                         DropdownMenuItem(value: t, child: Text(t))),
                   ],
-                  onChanged: (v) => setState(() {
-                    _tramitePrecargado = v;
-                    if (v != null &&
-                        _naturalezaController.text.isEmpty) {
-                      _naturalezaController.text = v;
-                    }
-                  }),
+                  onChanged: (v) {
+                    setState(() {
+                      _tramitePrecargado = v;
+                      if (v != null) {
+                        if (_naturalezaController.text.isEmpty) {
+                          _naturalezaController.text = v;
+                        }
+                        // Traer documentación de la oficina
+                        if (_oficinaId != null) {
+                          final oficina = widget.oficinas.firstWhere(
+                              (o) => o['id'] == _oficinaId,
+                              orElse: () => {});
+                          if (oficina.isNotEmpty) {
+                            final tramites =
+                                (oficina['tramites'] as List? ?? []);
+                            for (final t in tramites) {
+                              if (t is Map &&
+                                  (t['nombre']?.toString() ?? '') == v) {
+                                final docs = t['documentacion'];
+                                if (docs is List && docs.isNotEmpty) {
+                                  _documentacion =
+                                      List<Map<String, dynamic>>.from(
+                                    docs.map((d) {
+                                      if (d is Map)
+                                        return Map<String, dynamic>.from(
+                                            d as Map);
+                                      return {
+                                        'nombre': d.toString(),
+                                        'verificado': false
+                                      };
+                                    }),
+                                  );
+                                }
+                                break;
+                              }
+                            }
+                          }
+                        }
+                      }
+                    });
+                  },
                 ),
               ],
             ] else ...[
@@ -623,9 +642,80 @@ class _TramiteDialogState extends State<_TramiteDialog> {
             _CampoDialog(
                 label: 'Revisión periódica (cada X días)',
                 controller: _revisionController),
-            _CampoDialog(
-                label: 'Documentación requerida',
-                controller: _documentacionController),
+
+            // Documentación checklist
+            const SizedBox(height: 4),
+            const Text('Documentación requerida',
+                style: TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            ..._documentacion.asMap().entries.map((entry) {
+              final i = entry.key;
+              final d = entry.value;
+              return Row(
+                children: [
+                  Checkbox(
+                    value: d['verificado'] == true,
+                    activeColor: cs.primary,
+                    onChanged: (v) {
+                      setState(() {
+                        _documentacion[i]['verificado'] = v;
+                      });
+                    },
+                  ),
+                  Expanded(
+                    child: Text(
+                      d['nombre'] ?? '',
+                      style: TextStyle(
+                        fontSize: 13,
+                        decoration: d['verificado'] == true
+                            ? TextDecoration.lineThrough
+                            : null,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline,
+                        size: 18, color: Color(0xFF9CA3AF)),
+                    onPressed: () =>
+                        setState(() => _documentacion.removeAt(i)),
+                  ),
+                ],
+              );
+            }),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _docController,
+                    decoration: InputDecoration(
+                      hintText: 'Agregar documento...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.add_circle, color: cs.primary),
+                  onPressed: () {
+                    if (_docController.text.trim().isNotEmpty) {
+                      setState(() {
+                        _documentacion.add({
+                          'nombre': _docController.text.trim(),
+                          'verificado': false,
+                        });
+                        _docController.clear();
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Empleado asignado
             DropdownButtonFormField<String>(
               value: _empleadoAsignado,
               decoration: InputDecoration(
@@ -642,8 +732,7 @@ class _TramiteDialogState extends State<_TramiteDialog> {
                           Text('${e['nombre']} · ${e['rol'] ?? ''}'),
                     )),
               ],
-              onChanged: (v) =>
-                  setState(() => _empleadoAsignado = v),
+              onChanged: (v) => setState(() => _empleadoAsignado = v),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
@@ -683,14 +772,14 @@ class _TramiteDialogState extends State<_TramiteDialog> {
               'tramitePrecargado': _tramitePrecargado ?? '',
               'fechaLimite': _fechaLimiteController.text.trim(),
               'revisionPeriodica': _revisionController.text.trim(),
-              'documentacion': _documentacionController.text.trim(),
+              'documentacion': _documentacion,
               'empleadoAsignado': _empleadoAsignado ?? '',
               'estado': _estado,
             });
             Navigator.pop(context);
           },
-          style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1)),
+          style:
+              ElevatedButton.styleFrom(backgroundColor: cs.primary),
           child: const Text('Guardar',
               style: TextStyle(color: Colors.white)),
         ),
@@ -712,6 +801,7 @@ class _Campo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
@@ -722,16 +812,18 @@ class _Campo extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: cs.surface,
           border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+              borderSide:
+                  BorderSide(color: Theme.of(context).dividerColor)),
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+              borderSide:
+                  BorderSide(color: Theme.of(context).dividerColor)),
           focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF6366F1))),
+              borderSide: BorderSide(color: cs.primary)),
         ),
       ),
     );
@@ -746,17 +838,18 @@ class _CampoDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: controller,
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12)),
+          border:
+              OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF6366F1))),
+              borderSide: BorderSide(color: cs.primary)),
         ),
       ),
     );

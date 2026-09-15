@@ -13,15 +13,29 @@ class _TramitesScreenState extends State<TramitesScreen> {
   String _busqueda = '';
   String _filtroEstado = 'todos';
   String _filtroOficina = 'todas';
+  String _filtroEmpleado = 'todos';
+  String _ordenar = 'fecha';
+
+  DateTime? _parseFecha(String fecha) {
+    try {
+      final partes = fecha.split('/');
+      if (partes.length < 3) return null;
+      return DateTime(
+        int.parse(partes[2].length == 2 ? '20${partes[2]}' : partes[2]),
+        int.parse(partes[1]),
+        int.parse(partes[0]),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trámites'),
-      ),
+      appBar: AppBar(title: const Text('Trámites')),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _firestoreService.getCasos(),
         builder: (context, snapshot) {
@@ -37,9 +51,13 @@ class _TramitesScreenState extends State<TramitesScreen> {
             for (final t in tramites) {
               if (t is Map) {
                 final tramite = Map<String, dynamic>.from(t as Map);
-                tramite['casoNombre'] = caso['nombre'] ?? '';
-                tramite['casoId'] = caso['id'] ?? '';
-                todosTramites.add(tramite);
+tramite['casoNombre'] = caso['nombre'] ?? '';
+tramite['casoId'] = caso['id'] ?? '';
+// Heredar fecha del caso si el trámite no tiene
+if ((tramite['fechaLimite'] ?? '').isEmpty) {
+  tramite['fechaLimite'] = caso['fechaLimite'] ?? '';
+}
+todosTramites.add(tramite);
               }
             }
           }
@@ -50,7 +68,26 @@ class _TramitesScreenState extends State<TramitesScreen> {
               .toSet()
               .toList();
 
-          var tramitesFiltrados = todosTramites;
+          final empleados = todosTramites
+              .map((t) => t['empleadoAsignado']?.toString() ?? '')
+              .where((e) => e.isNotEmpty)
+              .toSet()
+              .toList();
+
+          final pendientes = todosTramites
+              .where((t) => t['estado'] == 'pendiente')
+              .length;
+          final enCurso = todosTramites
+              .where((t) => t['estado'] == 'en curso')
+              .length;
+          final completados = todosTramites
+              .where((t) => t['estado'] == 'completado')
+              .length;
+
+          var tramitesFiltrados = List<Map<String, dynamic>>.from(todosTramites);// Ocultar completados por defecto
+tramitesFiltrados = tramitesFiltrados
+    .where((t) => t['estado'] != 'completado')
+    .toList();
 
           if (_busqueda.isNotEmpty) {
             tramitesFiltrados = tramitesFiltrados.where((t) {
@@ -76,15 +113,29 @@ class _TramitesScreenState extends State<TramitesScreen> {
                 .toList();
           }
 
-          final pendientes = todosTramites
-              .where((t) => t['estado'] == 'pendiente')
-              .length;
-          final enCurso = todosTramites
-              .where((t) => t['estado'] == 'en curso')
-              .length;
-          final completados = todosTramites
-              .where((t) => t['estado'] == 'completado')
-              .length;
+          if (_filtroEmpleado != 'todos') {
+            tramitesFiltrados = tramitesFiltrados
+                .where((t) => t['empleadoAsignado'] == _filtroEmpleado)
+                .toList();
+          }
+
+          tramitesFiltrados.sort((a, b) {
+            if (_ordenar == 'fecha') {
+              final fa = _parseFecha(a['fechaLimite'] ?? '');
+              final fb = _parseFecha(b['fechaLimite'] ?? '');
+              if (fa == null && fb == null) return 0;
+              if (fa == null) return 1;
+              if (fb == null) return -1;
+              return fa.compareTo(fb);
+            } else if (_ordenar == 'oficina') {
+              return (a['oficinaNombre'] ?? '')
+                  .compareTo(b['oficinaNombre'] ?? '');
+            } else if (_ordenar == 'empleado') {
+              return (a['empleadoAsignado'] ?? '')
+                  .compareTo(b['empleadoAsignado'] ?? '');
+            }
+            return 0;
+          });
 
           return Column(
             children: [
@@ -92,7 +143,9 @@ class _TramitesScreenState extends State<TramitesScreen> {
                 color: cs.surface,
                 padding: const EdgeInsets.all(16),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Contadores
                     Row(
                       children: [
                         _ContadorChip(
@@ -130,6 +183,8 @@ class _TramitesScreenState extends State<TramitesScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
+
+                    // Búsqueda
                     TextField(
                       onChanged: (v) => setState(() => _busqueda = v),
                       decoration: InputDecoration(
@@ -138,8 +193,15 @@ class _TramitesScreenState extends State<TramitesScreen> {
                             color: cs.onSurface.withOpacity(0.4)),
                       ),
                     ),
+
+                    // Filtro por oficina
                     if (oficinas.isNotEmpty) ...[
                       const SizedBox(height: 12),
+                      Text('Oficina:',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: cs.onSurface.withOpacity(0.5))),
+                      const SizedBox(height: 6),
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
@@ -147,33 +209,99 @@ class _TramitesScreenState extends State<TramitesScreen> {
                             _FiltroChip(
                               label: 'Todas',
                               selected: _filtroOficina == 'todas',
-                              onTap: () => setState(
-                                  () => _filtroOficina = 'todas'),
+                              onTap: () =>
+                                  setState(() => _filtroOficina = 'todas'),
                             ),
                             ...oficinas.map((o) => Padding(
-                                  padding:
-                                      const EdgeInsets.only(left: 8),
+                                  padding: const EdgeInsets.only(left: 8),
                                   child: _FiltroChip(
                                     label: o,
                                     selected: _filtroOficina == o,
-                                    onTap: () => setState(
-                                        () => _filtroOficina = o),
+                                    onTap: () =>
+                                        setState(() => _filtroOficina = o),
                                   ),
                                 )),
                           ],
                         ),
                       ),
                     ],
+
+                    // Filtro por empleado
+                    if (empleados.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text('Empleado:',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: cs.onSurface.withOpacity(0.5))),
+                      const SizedBox(height: 6),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _FiltroChip(
+                              label: 'Todos',
+                              selected: _filtroEmpleado == 'todos',
+                              onTap: () =>
+                                  setState(() => _filtroEmpleado = 'todos'),
+                            ),
+                            ...empleados.map((e) => Padding(
+                                  padding: const EdgeInsets.only(left: 8),
+                                  child: _FiltroChip(
+                                    label: e,
+                                    selected: _filtroEmpleado == e,
+                                    onTap: () =>
+                                        setState(() => _filtroEmpleado = e),
+                                  ),
+                                )),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // Ordenar
+                    const SizedBox(height: 12),
+                    Text('Ordenar:',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: cs.onSurface.withOpacity(0.5))),
+                    const SizedBox(height: 6),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _FiltroChip(
+                            label: 'Fecha vencimiento',
+                            selected: _ordenar == 'fecha',
+                            onTap: () => setState(() => _ordenar = 'fecha'),
+                          ),
+                          const SizedBox(width: 8),
+                          _FiltroChip(
+                            label: 'Oficina',
+                            selected: _ordenar == 'oficina',
+                            onTap: () =>
+                                setState(() => _ordenar = 'oficina'),
+                          ),
+                          const SizedBox(width: 8),
+                          _FiltroChip(
+                            label: 'Empleado',
+                            selected: _ordenar == 'empleado',
+                            onTap: () =>
+                                setState(() => _ordenar = 'empleado'),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
+
+              // Lista
               Expanded(
                 child: tramitesFiltrados.isEmpty
                     ? Center(
                         child: Text('No hay trámites',
                             style: TextStyle(
-                                color:
-                                    cs.onBackground.withOpacity(0.5))),
+                                color: cs.onBackground.withOpacity(0.5))),
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
@@ -187,8 +315,7 @@ class _TramitesScreenState extends State<TramitesScreen> {
                             onCompletar: () async {
                               await _completarTramite(t);
                             },
-                            onNovedad: () =>
-                                _mostrarNovedad(context, t),
+                            onNovedad: () => _mostrarNovedad(context, t),
                           );
                         },
                       ),
@@ -200,37 +327,53 @@ class _TramitesScreenState extends State<TramitesScreen> {
     );
   }
 
-  Future<void> _completarTramite(
-      Map<String, dynamic> tramite) async {
-    final casos = await _firestoreService.getCasos().first;
-    final caso = casos.firstWhere(
-      (c) => c['id'] == tramite['casoId'],
-      orElse: () => {},
-    );
-    if (caso.isEmpty) return;
+  Future<void> _completarTramite(Map<String, dynamic> tramite) async {
+  final casos = await _firestoreService.getCasos().first;
+  final caso = casos.firstWhere(
+    (c) => c['id'] == tramite['casoId'],
+    orElse: () => {},
+  );
+  if (caso.isEmpty) return;
 
-    final tramites = List<Map<String, dynamic>>.from(
-      (caso['tramites'] as List? ?? [])
-          .map((t) => Map<String, dynamic>.from(t as Map)),
-    );
+  final tramites = List<Map<String, dynamic>>.from(
+    (caso['tramites'] as List? ?? [])
+        .map((t) => Map<String, dynamic>.from(t as Map)),
+  );
 
-    final idx = tramites.indexWhere(
-      (t) => t['naturaleza'] == tramite['naturaleza'],
-    );
+  final idx = tramites.indexWhere(
+    (t) => t['naturaleza'] == tramite['naturaleza'],
+  );
 
-    if (idx != -1) {
-      tramites[idx]['estado'] = 'completado';
-      final pendientes =
-          tramites.where((t) => t['estado'] != 'completado').length;
-      await _firestoreService.actualizarCaso(caso['id'], {
-        'tramites': tramites,
-        'tramitesPendientes': pendientes,
-      });
+  if (idx != -1) {
+    tramites[idx]['estado'] = 'completado';
+    
+    // Marcar todos los items del checklist como verificados
+    if (tramites[idx]['documentacion'] is List) {
+      final docs = List<Map<String, dynamic>>.from(
+        (tramites[idx]['documentacion'] as List).map((d) {
+          if (d is Map) {
+            final doc = Map<String, dynamic>.from(d as Map);
+            doc['verificado'] = true;
+            return doc;
+          }
+          return {'nombre': d.toString(), 'verificado': true};
+        }),
+      );
+      tramites[idx]['documentacion'] = docs;
     }
-  }
 
-  void _mostrarNovedad(
-      BuildContext context, Map<String, dynamic> tramite) {
+    final pendientes =
+        tramites.where((t) => t['estado'] != 'completado').length;
+    await _firestoreService.actualizarCaso(caso['id'], {
+      'tramites': tramites,
+      'tramitesPendientes': pendientes,
+    });
+  }
+}
+
+    
+
+  void _mostrarNovedad(BuildContext context, Map<String, dynamic> tramite) {
     final controller = TextEditingController();
     final cs = Theme.of(context).colorScheme;
 
@@ -242,7 +385,8 @@ class _TramitesScreenState extends State<TramitesScreen> {
           controller: controller,
           maxLines: 4,
           decoration: const InputDecoration(
-            hintText: 'Escribí lo que encontraste o lo que hay que tener en cuenta...',
+            hintText:
+                'Escribí lo que encontraste o lo que hay que tener en cuenta...',
           ),
         ),
         actions: [
@@ -257,8 +401,8 @@ class _TramitesScreenState extends State<TramitesScreen> {
               }
               if (context.mounted) Navigator.pop(context);
             },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: cs.primary),
+            style:
+                ElevatedButton.styleFrom(backgroundColor: cs.primary),
             child: const Text('Guardar',
                 style: TextStyle(color: Colors.white)),
           ),
@@ -367,23 +511,19 @@ class _FiltroChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? cs.primary : cs.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected
-                ? cs.primary
-                : Theme.of(context).dividerColor,
+            color: selected ? cs.primary : Theme.of(context).dividerColor,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected
-                ? Colors.white
-                : cs.onSurface.withOpacity(0.6),
+            color:
+                selected ? Colors.white : cs.onSurface.withOpacity(0.6),
             fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
@@ -422,8 +562,7 @@ class _TramiteCard extends StatelessWidget {
         estadoColor = cs.primary;
     }
 
-    final novedades =
-        List<String>.from(tramite['novedades'] ?? []);
+    final novedades = List<String>.from(tramite['novedades'] ?? []);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -480,8 +619,7 @@ class _TramiteCard extends StatelessWidget {
               child: Text(
                 'Oficina: ${tramite['oficinaNombre']}',
                 style: TextStyle(
-                    fontSize: 12,
-                    color: cs.onSurface.withOpacity(0.6)),
+                    fontSize: 12, color: cs.onSurface.withOpacity(0.6)),
               ),
             ),
           if ((tramite['fechaLimite'] ?? '') != '')
@@ -490,8 +628,7 @@ class _TramiteCard extends StatelessWidget {
               child: Text(
                 'Vence: ${tramite['fechaLimite']}',
                 style: TextStyle(
-                    fontSize: 12,
-                    color: cs.onSurface.withOpacity(0.6)),
+                    fontSize: 12, color: cs.onSurface.withOpacity(0.6)),
               ),
             ),
           if ((tramite['empleadoAsignado'] ?? '') != '')
@@ -500,12 +637,9 @@ class _TramiteCard extends StatelessWidget {
               child: Text(
                 'Empleado: ${tramite['empleadoAsignado']}',
                 style: TextStyle(
-                    fontSize: 12,
-                    color: cs.onSurface.withOpacity(0.4)),
+                    fontSize: 12, color: cs.onSurface.withOpacity(0.4)),
               ),
             ),
-
-          // Novedades previas
           if (novedades.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
@@ -540,7 +674,6 @@ class _TramiteCard extends StatelessWidget {
               ),
             ),
           ],
-
           const SizedBox(height: 12),
           Row(
             children: [
@@ -574,9 +707,8 @@ class _TramiteCard extends StatelessWidget {
                     style: const TextStyle(color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: completado
-                        ? const Color(0xFF10B981)
-                        : cs.primary,
+                    backgroundColor:
+                        completado ? const Color(0xFF10B981) : cs.primary,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),

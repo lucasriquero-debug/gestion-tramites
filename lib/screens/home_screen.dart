@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
+import '../services/notificacion_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -48,6 +49,11 @@ class HomeScreen extends StatelessWidget {
           final casos = snapshot.data ?? [];
           final urgentes =
               casos.where((c) => c['urgente'] == true).length;
+
+          // Disparar chequeo de notificaciones de vencimiento en segundo plano
+          if (casos.isNotEmpty) {
+            NotificacionService().generarNotificacionesVencimiento(casos);
+          }
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),

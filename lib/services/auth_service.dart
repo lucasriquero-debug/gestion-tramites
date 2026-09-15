@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'fcm_service.dart';
+
 
 enum UserRole { empleado, profesional, sinAcceso, cargando }
 
@@ -23,6 +25,9 @@ class AuthService extends ChangeNotifier {
     _auth.authStateChanges().listen((user) async {
       if (user != null) {
         await _detectarRol(user.email ?? '');
+        // Inicializar FCM una vez que el usuario ya está autenticado
+        // para que el token se guarde correctamente en Firestore
+        await FCMService().inicializar();
       } else {
         _role = UserRole.sinAcceso;
         _userData = {};
@@ -69,18 +74,29 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> signInWithGoogle() async {
-    try {
-      GoogleAuthProvider googleProvider = GoogleAuthProvider();
-      googleProvider.addScope('email');
-      googleProvider.addScope('profile');
-      await _auth.signInWithPopup(googleProvider);
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Error en login: $e');
-    }
-  }
 
+  Future<void> signInWithGoogle() async {
+  try {
+    GoogleAuthProvider googleProvider = GoogleAuthProvider();
+    googleProvider.addScope('email');
+    googleProvider.addScope('profile');
+    await _auth.signInWithPopup(googleProvider);
+    notifyListeners();
+  } catch (e) {
+    debugPrint('Error en login: $e');
+  }
+}
+bool get esCEO {
+  return (_userData['rol'] ?? '').toString().toLowerCase() == 'ceo' ||
+      (_userData['rol'] ?? '').toString().toLowerCase() == 'administrador';
+}
+
+bool tienePermiso(String permiso) {
+  if (esCEO) return true;
+  return (_userData['permisos'] ?? {})[permiso] == true;
+}
+
+String get nombreEmpleado => _userData['nombre'] ?? '';
   Future<void> signOut() async {
     await _auth.signOut();
     _role = UserRole.sinAcceso;

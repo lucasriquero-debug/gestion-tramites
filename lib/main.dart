@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'services/theme_service.dart';
+import 'services/fcm_service.dart';
 import 'router/app_router.dart';
 
 void main() async {
@@ -31,6 +32,9 @@ class MyApp extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             theme: themeService.theme,
             routerConfig: appRouter,
+            // Clave para mostrar SnackBars de notificaciones push
+            // sin necesitar un BuildContext de una pantalla específica
+            scaffoldMessengerKey: FCMService.messengerKey,
           );
         },
       ),

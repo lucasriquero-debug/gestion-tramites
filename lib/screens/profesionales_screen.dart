@@ -138,7 +138,7 @@ class _ProfesionalesScreenState extends State<ProfesionalesScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                              ProfesionalDetalleScreen(profesional: p),
+                              ProfesionalDetalleScreen(profesionalId: p['id']),
                         ),
                       ),
                       child: Container(
