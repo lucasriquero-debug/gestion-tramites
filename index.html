@@ -43,7 +43,8 @@
   -->
   <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/gestion-tramites/firebase-messaging-sw.js')
+    var swPath = (window.location.pathname.startsWith('/gestion-tramites') ? '/gestion-tramites/' : '/') + 'firebase-messaging-sw.js';
+    navigator.serviceWorker.register(swPath)
       .then(function(registration) {
         console.log('Service Worker registrado:', registration);
       })
